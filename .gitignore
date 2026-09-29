@@ -1,0 +1,93 @@
+# ==============================
+# RTL / SystemVerilog Simulation
+# ==============================
+
+# ModelSim / Questa
+work/
+transcript
+vsim.wlf
+*.wlf
+*.vstf
+modelsim.ini
+
+# ModelSim generated files
+*.log
+*.jou
+*.mpf
+*.mti
+*.bak
+
+# Verilator
+obj_dir/
+coverage.dat
+coverage_dir/
+*.vcd
+*.fst
+*.ghw
+
+# Waveforms
+*.vcd
+*.fst
+*.wlf
+
+# Simulation output
+sim/
+simulation/
+results/
+logs/
+
+# ==============================
+# Build / Generated Files
+# ==============================
+
+build/
+out/
+tmp/
+*.o
+*.a
+*.so
+
+# ==============================
+# Quartus / FPGA
+# ==============================
+
+db/
+incremental_db/
+*.rpt
+*.summary
+*.smsg
+*.pin
+*.qws
+*.qpf
+*.qsf
+*.sof
+*.pof
+
+# Keep project configuration if needed
+# *.qsf
+# *.qpf
+
+# ==============================
+# Editor / IDE
+# ==============================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==============================
+# OS
+# ==============================
+
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Temporary files
+# ==============================
+
+*.tmp
+*.temp
+*.bak
