@@ -18,7 +18,7 @@ module regfile(
 
     always_ff @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
-            for (int i=0; i<32; i = i + 1) begin
+            for (i=0; i<32; i = i + 1) begin
                 regs[i] <= 32'd0;
             end 
         end else if (reg_write && (rd_addr != 5'd0)) begin
