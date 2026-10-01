@@ -36,15 +36,30 @@ logic        zero;           // ALU -> Branch Control (future)
 logic [31:0] mem_read_data;  // Data Memory -> Writeback MUX
 logic [31:0] writeback_data; // Writeback MUX -> Register File
 
-assign pc_next = pc_out + 32'd4; // PC + 4 -> PC
+logic branch;
+logic branch_taken;
 
-assign alu_b = alu_src_b
-             ? immediate         // Select immediate
-             : rs2_data;         // Select register data
+logic lui_sel;
 
-assign writeback_data = mem_to_reg
-                      ? mem_read_data  // LW: memory data
-                      : alu_result;    // ADD/SUB/ADDI: ALU result
+logic jump;
+logic jalr;
+
+assign branch_taken = branch && ((funct3 == 3'b000 && zero) ||
+                                  funct3 == 3'b001 && !zero);
+
+assign pc_next  = jalr          ? (alu_result & 32'hFFFF_FFFE)
+                : jump          ? pc_out + immediate 
+                : branch_taken  ? pc_out + immediate 
+                : pc_out + 32'd4;
+
+assign alu_b = alu_src_b    ? immediate         // Select immediate
+                            : rs2_data;         // Select register data
+
+assign writeback_data = (jump || jalr)  ? pc_out + 32'd4    : 
+                        lui_sel         ? immediate         :
+                        mem_to_reg      ? mem_read_data     :
+                        alu_result;
+       
 
 //--------------------------------------------------------//
 
@@ -99,6 +114,13 @@ control_unit u_control(
 
     ,.mem_write (mem_write)
     ,.mem_to_reg(mem_to_reg)
+
+    ,.branch    (branch)
+
+    ,.lui_sel   (lui_sel)
+
+    ,.jump      (jump)
+    ,.jalr      (jalr)
 );
 
 //--------------------------------------------------------//
@@ -144,6 +166,7 @@ alu u_alu (
 
 data_memory u_data_memory(
     .clk    (clk)
+    ,.funct3    (funct3)
     ,.mem_write (mem_write)
     ,.address   (alu_result)    //rs1 + immediate
     ,.write_data(rs2_data)      // Data for SW

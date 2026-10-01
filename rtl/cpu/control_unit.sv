@@ -9,6 +9,13 @@ module control_unit(
     
     , output logic      mem_write
     , output logic      mem_to_reg
+
+    , output logic      branch
+
+    , output logic      lui_sel 
+
+    , output logic      jump
+    , output logic      jalr
 );
 
     always_comb begin
@@ -18,6 +25,13 @@ module control_unit(
         reg_write   = 1'b0;
         alu_src_b   = 1'b0;
         alu_op      = 3'b000;
+
+        branch      = 1'b0;
+
+        lui_sel     = 1'b0;
+
+        jump        = 1'b0;
+        jalr        = 1'b0;
 
         case (opcode)
 
@@ -53,7 +67,29 @@ module control_unit(
                 mem_to_reg  = 1'b0;
             end
 
+            7'b1100011: begin           // BEQ / BNE
+                branch      = 1'b1;
+                reg_write   = 1'b0;
+                alu_src_b   = 1'b0;
+                alu_op      = 3'b001;   // SUB to compare registers
+            end
 
+            7'b0110111: begin
+                reg_write   = 1'b1;
+                lui_sel     = 1'b1;
+            end
+
+            7'b1101111: begin
+                reg_write   = 1'b1;
+                jump        = 1'b1;
+            end
+
+            7'b1100111: begin
+                reg_write   = 1'b1;
+                jalr        = 1'b1;
+                alu_src_b   = 1'b1;
+                alu_op      = 3'b000; // ADD
+            end
         endcase
     end
     
