@@ -8,9 +8,47 @@ module rv32_core(
 //--------------------------------------------------------//
 
 //--------------------------------------------------------//
-logic [31:0] pc_next;
+logic [31:0] pc_next;        // PC: next instruction address
 
-assign  pc_next = pc_out + 32'd4;
+logic [6:0]  opcode;         // Decoder -> Control Unit
+logic [4:0]  rd;             // Decoder -> Register File
+logic [2:0]  funct3;         // Decoder -> Control Unit
+logic [4:0]  rs1;            // Decoder -> Register File
+logic [4:0]  rs2;            // Decoder -> Register File
+logic [6:0]  funct7;        // Decoder -> Control Unit
+
+logic [31:0] immediate;      // Immediate Generator -> ALU B MUX
+
+logic        reg_write;      // Control Unit -> Register File
+logic        alu_src_b;      // Control Unit -> ALU B MUX
+logic [2:0]  alu_op;         // Control Unit -> ALU
+
+logic        mem_write;      // Control Unit -> Data Memory
+logic        mem_to_reg;     // Control Unit -> Writeback MUX
+
+logic [31:0] alu_result;     // ALU -> Data Memory / Writeback MUX
+logic [31:0] rs1_data;       // Register File -> ALU A
+logic [31:0] rs2_data;       // Register File -> ALU B MUX / Data Memory
+
+logic [31:0] alu_b;          // ALU B MUX -> ALU
+logic        zero;           // ALU -> Branch Control (future)
+
+logic [31:0] mem_read_data;  // Data Memory -> Writeback MUX
+logic [31:0] writeback_data; // Writeback MUX -> Register File
+
+assign pc_next = pc_out + 32'd4; // PC + 4 -> PC
+
+assign alu_b = alu_src_b
+             ? immediate         // Select immediate
+             : rs2_data;         // Select register data
+
+assign writeback_data = mem_to_reg
+                      ? mem_read_data  // LW: memory data
+                      : alu_result;    // ADD/SUB/ADDI: ALU result
+
+//--------------------------------------------------------//
+
+//--------------------------------------------------------//
 
 pc u_pc (
     .clk        (clk)
@@ -22,14 +60,6 @@ pc u_pc (
 //--------------------------------------------------------//
 
 //--------------------------------------------------------//
-
-logic [6:0]     opcode;
-logic [4:0]     rd;
-logic [2:0]     funct3;
-logic [4:0]     rs1;
-logic [4:0]     rs2;
-logic [6:0]     funct7;
-
 
 
 decoder u_decoder(
@@ -46,7 +76,7 @@ decoder u_decoder(
 
 //--------------------------------------------------------//
 
-logic [31:0] immediate;
+
 
 immediate_gen u_imm(
     .instruction    (instruction)
@@ -57,9 +87,6 @@ immediate_gen u_imm(
 
 //--------------------------------------------------------//
 
-logic       reg_write;
-logic       alu_src_b;
-logic [2:0] alu_op;
 
 control_unit u_control(
     .opcode     (opcode)
@@ -69,15 +96,16 @@ control_unit u_control(
     ,.reg_write (reg_write)
     ,.alu_src_b (alu_src_b)
     ,.alu_op    (alu_op)
+
+    ,.mem_write (mem_write)
+    ,.mem_to_reg(mem_to_reg)
 );
 
 //--------------------------------------------------------//
 
 //--------------------------------------------------------//
 
-logic [31:0]    alu_result;
-logic [31:0]    rs1_data;
-logic [31:0]    rs2_data;
+
 
 regfile u_regfile(
     .clk    (clk)
@@ -87,7 +115,7 @@ regfile u_regfile(
     ,.rs2_addr  (rs2)
     ,.rd_addr   (rd)
 
-    ,.rd_data   (alu_result)
+    ,.rd_data   (writeback_data)
     ,.reg_write (reg_write)
 
     ,.rs1_data  (rs1_data)
@@ -98,11 +126,7 @@ regfile u_regfile(
 
 //--------------------------------------------------------//
 
-logic [31:0]    alu_b;
-logic           zero;
 
-
-assign  alu_b = alu_src_b ? immediate : rs2_data;
 
 alu u_alu (
     .a          (rs1_data)
@@ -111,6 +135,19 @@ alu u_alu (
 
     ,.result    (alu_result)
     ,.zero      (zero)
+);
+
+//--------------------------------------------------------//
+
+//--------------------------------------------------------//
+
+
+data_memory u_data_memory(
+    .clk    (clk)
+    ,.mem_write (mem_write)
+    ,.address   (alu_result)    //rs1 + immediate
+    ,.write_data(rs2_data)      // Data for SW
+    ,.read_data (mem_read_data) // Data for LW
 );
 
 

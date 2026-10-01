@@ -39,6 +39,7 @@ module rv32_core_tb;
         $display("x1 = %0d", dut.u_regfile.regs[1]);
         $display("x2 = %0d", dut.u_regfile.regs[2]);
         $display("x3 = %0d", dut.u_regfile.regs[3]);
+        $display("x4 = %0d", dut.u_regfile.regs[4]);
 
         if ((dut.u_regfile.regs[1] == 10) &&
             (dut.u_regfile.regs[2] == 20) &&
@@ -46,6 +47,17 @@ module rv32_core_tb;
             $display("CPU TEST PASSED");
         else
             $display("CPU TEST FAILED");
+
+
+        repeat (7) @(posedge clk);
+        #1;
+        $display("x5 = %0d", dut.u_regfile.regs[5]);
+        $display("x6 = %0d", dut.u_regfile.regs[6]);
+
+        if (dut.u_regfile.regs[6] === 32'd99)
+            $display("LW/SW TEST PASSED");
+        else
+            $error("LW/SW TEST FAILED");
 
         $finish;
 

@@ -6,9 +6,15 @@ module control_unit(
     , output logic      reg_write
     , output logic      alu_src_b
     , output logic [2:0] alu_op 
+    
+    , output logic      mem_write
+    , output logic      mem_to_reg
 );
 
     always_comb begin
+        mem_write   = 1'b0;
+        mem_to_reg  = 1'b0;
+
         reg_write   = 1'b0;
         alu_src_b   = 1'b0;
         alu_op      = 3'b000;
@@ -30,6 +36,24 @@ module control_unit(
                 alu_src_b   = 1'b1;
                 alu_op      = 3'b000;   //ADD
             end
+
+            7'b0000011: begin           // LW
+                reg_write   = 1'b1;
+                alu_src_b   = 1'b1;     // ALU B = immediate
+                alu_op      = 3'b000;   // ADD address
+                mem_write   = 1'b0;
+                mem_to_reg  = 1'b1;     // Write memory data to rd
+            end
+
+            7'b0100011: begin           // SW
+                reg_write   = 1'b0;
+                alu_src_b   = 1'b1;     // ALU B = immediate
+                alu_op      = 3'b000;   // ADD address
+                mem_write   = 1'b1;
+                mem_to_reg  = 1'b0;
+            end
+
+
         endcase
     end
     

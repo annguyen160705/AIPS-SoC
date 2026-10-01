@@ -1,3 +1,4 @@
 Get-ChildItem .\rtl\cpu\*.sv | ForEach-Object { vlog $_.FullName }
 vlog .\tb\cpu\rv32_core_tb.sv     
 vsim -voptargs=+acc -c -do "run -all; quit" rv32_core_tb   
+vsim -debugDB -voptargs=+acc -do "run -all" rv32_core_tb

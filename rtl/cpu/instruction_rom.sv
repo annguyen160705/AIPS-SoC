@@ -1,5 +1,5 @@
 module instruction_rom(
-    input logic [31:0] pc
+      input logic [31:0] pc
     , output logic [31:0] instruction
 );
 
