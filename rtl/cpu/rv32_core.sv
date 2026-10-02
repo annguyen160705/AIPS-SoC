@@ -44,21 +44,33 @@ logic lui_sel;
 logic jump;
 logic jalr;
 
+// Branch decision (BEQ / BNE)
+// BEQ (funct3 = 000): Branch if rs1 == rs2 (zero = 1)
+// BNE (funct3 = 001): Branch if rs1 != rs2 (zero = 0)
 assign branch_taken = branch && ((funct3 == 3'b000 && zero) ||
-                                  funct3 == 3'b001 && !zero);
+                                 (funct3 == 3'b001 && !zero));
 
-assign pc_next  = jalr          ? (alu_result & 32'hFFFF_FFFE)
-                : jump          ? pc_out + immediate 
-                : branch_taken  ? pc_out + immediate 
-                : pc_out + 32'd4;
 
-assign alu_b = alu_src_b    ? immediate         // Select immediate
-                            : rs2_data;         // Select register data
+// Next PC selection (priority: JALR > JAL > Branch > PC+4)
+assign pc_next = jalr         ? (alu_result & 32'hFFFF_FFFE) : // JALR: PC = (rs1 + imm) & ~1
+                 jump         ? pc_out + immediate          : // JAL:  PC = PC + imm
+                 branch_taken ? pc_out + immediate          : // BEQ/BNE: Branch target
+                                pc_out + 32'd4;               // Normal: Next instruction
 
-assign writeback_data = (jump || jalr)  ? pc_out + 32'd4    : 
-                        lui_sel         ? immediate         :
-                        mem_to_reg      ? mem_read_data     :
-                        alu_result;
+
+// ALU operand B selection
+// alu_src_b = 1: Use immediate (ADDI, LW, SW, LB, SB, JALR)
+// alu_src_b = 0: Use rs2_data (ADD, SUB, BEQ, BNE)
+assign alu_b = alu_src_b ? immediate : // Immediate operand
+                           rs2_data;  // Register operand
+
+
+// Register writeback selection (priority: Jump > LUI > Memory > ALU)
+assign writeback_data =
+    (jump || jalr) ? pc_out + 32'd4 : // JAL/JALR: Save return address (PC + 4)
+    lui_sel        ? immediate      : // LUI: Load upper immediate
+    mem_to_reg     ? mem_read_data  : // LW/LB: Load data from memory
+                     alu_result;     // ADD/SUB/ADDI: Write ALU result
        
 
 //--------------------------------------------------------//
@@ -128,7 +140,6 @@ control_unit u_control(
 //--------------------------------------------------------//
 
 
-
 regfile u_regfile(
     .clk    (clk)
     ,.rst_n (rst_n)
@@ -149,7 +160,6 @@ regfile u_regfile(
 //--------------------------------------------------------//
 
 
-
 alu u_alu (
     .a          (rs1_data)
     ,.b         (alu_b)
@@ -164,12 +174,12 @@ alu u_alu (
 //--------------------------------------------------------//
 
 
-data_memory u_data_memory(
+sram u_sram(
     .clk    (clk)
-    ,.funct3    (funct3)
-    ,.mem_write (mem_write)
     ,.address   (alu_result)    //rs1 + immediate
     ,.write_data(rs2_data)      // Data for SW
+    ,.mem_write (mem_write)
+    ,.funct3    (funct3)
     ,.read_data (mem_read_data) // Data for LW
 );
 

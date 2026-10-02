@@ -73,3 +73,56 @@ endmodule
 // instruction[11:7]  = 01100
 // immediate = 12
 // Address = x1 + 12
+
+// Example 4: BEQ (B-Type)
+// beq x1, x2, 8
+// instruction = 32'h00208463
+// instruction[31]    = 0
+// instruction[7]     = 0
+// instruction[30:25] = 000000
+// instruction[11:8]  = 0100
+// immediate = 8
+// If (x1 == x2), PC = PC + 8
+// Otherwise, PC = PC + 4
+
+
+// Example 5: BNE (B-Type)
+// bne x1, x3, 8
+// instruction = 32'h00309463
+// instruction[31]    = 0
+// instruction[7]     = 0
+// instruction[30:25] = 000000
+// instruction[11:8]  = 0100
+// immediate = 8
+// If (x1 != x3), PC = PC + 8
+// Otherwise, PC = PC + 4
+
+
+// Example 6: LUI (U-Type)
+// lui x11, 0x10000
+// instruction = 32'h100005B7
+// instruction[31:12] = 20'h10000
+// immediate = 32'h10000000
+// x11 = 0x10000000
+
+
+// Example 7: JAL (J-Type)
+// jal x1, 8
+// instruction = 32'h008000EF
+// instruction[31]    = 0
+// instruction[19:12] = 00000000
+// instruction[20]    = 0
+// instruction[30:21] = 0000000100
+// immediate = 8
+// x1 = PC + 4
+// PC = PC + 8
+
+
+// Example 8: JALR (I-Type)
+// jalr x2, 0(x5)
+// instruction = 32'h00028167
+// instruction[31:20] = 000000000000
+// immediate = 0
+// x2 = PC + 4
+// PC = (x5 + 0) & 32'hFFFFFFFE
+// Bit 0 of the target address is cleared
